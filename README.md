@@ -17,6 +17,7 @@ interviews, portfolios, and agent identity.
 - Stores resume-safe claims and evidence.
 - Exports an agent-readable identity summary.
 - Builds target-job resume context from the local vault.
+- Captures career-relevant agent sessions as draft events with user approval.
 - Keeps data in portable files that can be committed to Git or moved across
   machines.
 
@@ -61,6 +62,16 @@ python scripts/career_vault.py add-source \
   --type note \
   --title "Initial career note" \
   --text "I built a LaTeX resume generator and explored AI rewriting for job-specific resumes."
+```
+
+Save a career-relevant agent session summary:
+
+```bash
+python scripts/career_vault.py add-source \
+  --vault ~/.career-vault \
+  --type agent_session \
+  --title "Built Career Vault Resume skill" \
+  --text "Designed and implemented a local-first career memory skill with schemas, CLI, examples, and tests."
 ```
 
 Add an event:

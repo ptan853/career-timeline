@@ -1,6 +1,6 @@
 ---
 name: career-vault-resume
-description: Build and maintain a local career memory vault from resumes, notes, links, files, GitHub/project material, and job descriptions. Use when Codex needs to extract career events, store verified professional facts, create resume context for a target JD, or provide agent-readable user identity from a local vault.
+description: Build and maintain a local career memory vault from resumes, CVs, career histories, notes, links, files, GitHub/project material, agent sessions, and job descriptions. Use automatically when Codex discusses resumes, professional background, career events, project history, portfolio material, job applications, JD matching, resume generation, interview stories, or agent-readable user identity.
 ---
 
 # Career Vault Resume
@@ -9,6 +9,10 @@ Use this skill to maintain a local, portable career memory that agents can share
 The vault stores source material, career events, resume-safe claims, evidence,
 and generated resume context. Prefer updating the vault before drafting resumes
 or professional identity summaries.
+
+Trigger this skill implicitly for resume, CV, career profile, project history,
+job application, portfolio, interview preparation, or JD matching work. The user
+does not need to name the skill.
 
 ## Core Rules
 
@@ -42,6 +46,36 @@ repo unless the user explicitly wants the career memory versioned there.
 5. Extract or update claims for each event.
 6. Build `exports/agent_identity.md` when an agent needs user background.
 7. Build `exports/resume_context.md` when a user provides a target JD.
+
+## Agent-Guided Use
+
+Guide the user through the process instead of asking them to edit YAML. Ask for
+the smallest useful next input: an old resume, a project link, a rough story, a
+JD, or confirmation of uncertain fields. After extracting events, show a concise
+review list and ask the user what should be confirmed, edited, merged, hidden,
+or left as `needs_review`.
+
+## Session Capture
+
+When a session produces career-relevant work, offer to save it as a draft event.
+This applies to completed projects, open-source releases, research notes,
+portfolio work, job-search preparation, resume generation, interviews, and
+significant debugging or engineering work.
+
+Use `agent_session` as the source type. The source should summarize what
+happened in the session, not copy private conversation verbatim unless the user
+asks for that. Create draft events from the session summary and include links to
+repos, branches, commits, PRs, generated files, or published pages when known.
+
+Ask before saving session-derived events. A good prompt is:
+
+```text
+This session produced career-relevant work. Should I save it to your career
+vault as a draft event?
+```
+
+Session-derived events should usually start as `draft` because the user may want
+to adjust ownership, dates, public visibility, or resume wording.
 
 ## Data Model
 
@@ -103,6 +137,7 @@ Use `scripts/career_vault.py` for deterministic file operations:
 ```bash
 python scripts/career_vault.py init --vault ~/.career-vault
 python scripts/career_vault.py add-source --vault ~/.career-vault --type note --title "Career note" --text "..."
+python scripts/career_vault.py add-source --vault ~/.career-vault --type agent_session --title "Built Career Vault Resume skill" --text "..."
 python scripts/career_vault.py add-event --vault ~/.career-vault --title "Built AI Resume Generator" --type project --start 2025-05 --description "..."
 python scripts/career_vault.py list-events --vault ~/.career-vault
 python scripts/career_vault.py build-identity --vault ~/.career-vault

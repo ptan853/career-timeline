@@ -38,6 +38,7 @@ EVENT_TYPES = {
 
 EVENT_STATUSES = {"draft", "confirmed", "needs_review", "archived"}
 VISIBILITIES = {"private", "resume", "public"}
+SOURCE_TYPES = {"note", "resume", "file", "url", "github", "jd", "agent_session"}
 
 
 def now_iso() -> str:
@@ -362,7 +363,7 @@ def build_parser() -> argparse.ArgumentParser:
     init.set_defaults(func=command_init)
 
     source = sub.add_parser("add-source", help="Add raw source material")
-    source.add_argument("--type", required=True, choices=["note", "resume", "file", "url", "github", "jd"])
+    source.add_argument("--type", required=True, choices=sorted(SOURCE_TYPES))
     source.add_argument("--title", required=True)
     source.add_argument("--text", default="")
     source.add_argument("--file")

@@ -133,3 +133,15 @@ Claim statuses:
 
 Evidence should point back to sources, excerpts, links, or file paths. Do not
 discard raw source material after extraction.
+
+## Source Types
+
+Use:
+
+- `note`: user-provided free text
+- `resume`: old resume or CV
+- `file`: uploaded or local file
+- `url`: web link
+- `github`: repository or GitHub artifact
+- `jd`: job description
+- `agent_session`: summary of career-relevant work completed with an agent

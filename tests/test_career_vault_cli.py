@@ -50,3 +50,22 @@ def test_init_add_event_and_export(tmp_path: Path) -> None:
     identity = vault / "exports" / "agent_identity.md"
     assert identity.exists()
     assert "AI Resume Generator" in identity.read_text()
+
+
+def test_agent_session_source_type(tmp_path: Path) -> None:
+    vault = tmp_path / ".career-vault"
+    run_cli(vault, "init")
+    result = run_cli(
+        vault,
+        "add-source",
+        "--type",
+        "agent_session",
+        "--title",
+        "Built Career Vault Resume skill",
+        "--text",
+        "Implemented a local-first career memory skill.",
+    )
+
+    source_path = Path(result.stdout.strip())
+    assert source_path.exists()
+    assert "Source type: agent_session" in source_path.read_text()

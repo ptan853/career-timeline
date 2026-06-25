@@ -9,7 +9,7 @@
     "id": { "type": "string", "pattern": "^src_[A-Za-z0-9_-]+$" },
     "type": {
       "type": "string",
-      "enum": ["note", "resume", "file", "url", "github", "jd"]
+      "enum": ["note", "resume", "file", "url", "github", "jd", "agent_session"]
     },
     "title": { "type": "string", "minLength": 1 },
     "uri": { "type": ["string", "null"] },

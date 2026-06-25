@@ -12,6 +12,7 @@ career events.
 - Keep overlapping dates if the source supports them.
 - Use relations instead of forcing one hierarchy.
 - Mark uncertainty explicitly.
+- For agent sessions, summarize the delivered work and ask before storing it.
 
 ## What Counts as an Event
 
@@ -27,6 +28,8 @@ Create events for:
 - open source contributions
 - startups and products
 - meaningful milestones
+- career-relevant agent sessions that produced a project, release, document,
+  public artifact, interview preparation, or job application material
 
 Do not create events for vague claims without evidence unless they are marked
 `needs_review`.
@@ -40,6 +43,25 @@ Do not create events for vague claims without evidence unless they are marked
 5. Generate draft claims for each event.
 6. Add `needs_review` to missing dates, vague metrics, unclear ownership, or
    unsupported impact.
+
+## Agent Session Extraction
+
+When extracting from the current agent session:
+
+1. Identify the artifact or outcome that was actually produced.
+2. Record the repo, files, commit, branch, PR, URL, or generated artifact when
+   available.
+3. Write the event as a project, milestone, open source contribution, resume
+   preparation event, or custom event.
+4. Keep status as `draft` unless the user explicitly confirms it.
+5. Avoid storing private raw chat unless the user asks.
+6. Mark unclear ownership, dates, and public visibility as `needs_review`.
+
+Useful claims from a session should be concrete:
+
+- Implemented a file-based CLI for maintaining a local career vault.
+- Defined JSON Schemas for career events, sources, claims, and profile metadata.
+- Published an initial open-source skill repository on GitHub.
 
 ## Event Type Guidance
 
