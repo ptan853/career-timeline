@@ -63,12 +63,13 @@ repo unless the user explicitly wants the career memory versioned there.
 6. Add concise event-level claims when the source supports them.
 7. Build `exports/agent_identity.md` when an agent needs user background.
 8. Build `exports/resume_context.md` when a user provides a target JD.
+9. Build `exports/basic_resume.*` only when the user wants a simple,
+   conservative resume from the vault.
 
-Do not imply that this skill can already produce a final resume PDF. The current
-resume output is `exports/resume_context.md`, which is source material for a
-later resume drafting or rendering step. Complex, highly designed, editable
-resumes should be handled by a separate resume-design skill that consumes this
-vault's exported context.
+This skill can produce a simple black-and-white basic resume as JSON, Markdown,
+and editable HTML. Do not imply that it produces polished visual resume designs
+or final PDFs. Complex, highly designed, editable resumes should be handled by a
+separate resume-design skill that consumes this vault's exported context.
 
 ## Agent-Guided Use
 
@@ -95,6 +96,23 @@ Photo/headshot is optional. If a target resume template, region, or portfolio
 style may benefit from a photo, tell the user they can provide one, but do not
 block resume readiness on it. For conservative or ATS-oriented resumes, default
 to no photo unless the user asks.
+
+Photo guidance for basic resumes: recommend a square or 4:5 headshot, at least
+600x600 px, JPG or PNG. The current CLI copies the photo into
+`exports/assets/` and displays it in a fixed frame. It does not yet crop,
+retouch, or automatically align the face.
+
+Basic resume generation must accept the user's requested language and page
+count. Use `zh` or `en` section labels at output time. For one-page resumes,
+prefer fewer events and concise bullets; for two-page resumes, allow more
+events. Never shrink text until it becomes unreadable.
+
+Do not hard-code one universal section list. Use preferred section candidates
+such as Education, Work Experience, Internship Experience, Projects, Open
+Source, Skills, Research, Publications, Awards, Certifications, Languages, and
+Summary, but select, merge, rename, or omit sections according to the user's
+background, target role, language, and page limit. The renderer should respect
+the section order produced by the agent or derived from the available events.
 
 When the user asks what the agent knows about them, asks for user-specific
 professional advice, or asks about their background, build or read
@@ -195,12 +213,13 @@ python scripts/career_vault.py --vault ~/.career-vault profile update --display-
 python scripts/career_vault.py --vault ~/.career-vault check-readiness --for resume
 python scripts/career_vault.py --vault ~/.career-vault build-identity
 python scripts/career_vault.py --vault ~/.career-vault build-resume-context --jd path/to/jd.md
+python scripts/career_vault.py --vault ~/.career-vault build-basic-resume --language zh --pages 1 --include-photo
 ```
 
 The script does not replace agent judgment. Use the script to create, list, and
 export vault files after extracting structured content. Schema validation,
-standalone claim storage, source metadata records, and resume PDF rendering are
-not implemented yet.
+standalone claim storage, source metadata records, photo cropping, and resume
+PDF rendering are not implemented yet.
 
 ## References
 

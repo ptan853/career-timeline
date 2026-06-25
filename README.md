@@ -1,5 +1,7 @@
 # Career Vault Resume
 
+![Career Vault Resume cover](assets/cover.png)
+
 <p align="center">
   <em>路漫漫其修远兮，吾将上下而求索。</em><br>
   <sub>The road ahead is long and far; I will keep searching high and low.</sub>
@@ -39,11 +41,13 @@ agents can read before answering user-specific professional questions.
 - Exports `agent_identity.md` so future agents can understand the user's
   professional background.
 - Builds basic JD-specific `resume_context.md` for downstream resume drafting.
+- Generates a conservative black-and-white basic resume as JSON, Markdown, and
+  editable HTML.
 
 Current limits: no automatic PDF parsing, no standalone claim database yet, no
-visual resume templates, and no PDF rendering. Complex, editable, designed
-resumes should be handled by a separate resume-designer skill that consumes this
-vault's exported context.
+visual resume templates, no automatic photo cropping, and no PDF rendering.
+Complex, editable, designed resumes should be handled by a separate
+resume-designer skill that consumes this vault's exported context.
 
 ## How It Works
 
@@ -119,6 +123,15 @@ The generated identity file lives at:
 ~/.career-vault/exports/agent_identity.md
 ```
 
+Generate a simple editable resume:
+
+```bash
+python scripts/career_vault.py --vault ~/.career-vault build-basic-resume \
+  --language zh \
+  --pages 1 \
+  --include-photo
+```
+
 Run `python scripts/career_vault.py --help` for the full CLI. Use
 `build-resume-context --jd jd.md` when a target job description is available.
 
@@ -134,6 +147,9 @@ Run `python scripts/career_vault.py --help` for the full CLI. Use
   exports/
     agent_identity.md       # compact context for future agents
     resume_context.md       # JD-specific selected background
+    basic_resume.json       # structured draft for simple resumes
+    basic_resume.md         # readable black-and-white resume draft
+    basic_resume.html       # editable browser version
 ```
 
 Files are human-readable by design. Users can inspect them, version them, move
@@ -185,13 +201,14 @@ career-vault-resume/
 
 This is an early skill-first MVP. It currently covers local identity storage,
 career event storage, draft event import, agent identity export, and basic
-resume context export.
+resume context/basic resume export.
 
 Planned next steps:
 
 - schema-backed validation
 - standalone claim and evidence storage
 - stronger source ingestion
-- simple black-and-white resume drafting
+- photo cropping and alignment for resume templates
+- PDF export for the simple basic resume
 - handoff to a separate resume-designer skill for polished editable HTML/PDF
   resumes

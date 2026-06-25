@@ -31,6 +31,51 @@ Produce `exports/resume_context.md` with:
 - suggested resume angle
 - risk notes for unsupported facts
 
+For a simple basic resume, the CLI can also produce:
+
+- `exports/basic_resume.json`
+- `exports/basic_resume.md`
+- `exports/basic_resume.html`
+
+The basic resume is a conservative black-and-white fallback. It is not the
+design-forward resume path.
+By default, it uses confirmed events only. Draft or `needs_review` events should
+be confirmed by the user before being used in a formal resume.
+
+## Basic Resume Controls
+
+Support user preferences for:
+
+- language: `zh` or `en`
+- page count: usually `1` or `2`
+- optional photo/headshot inclusion
+
+Photo is optional. If used, recommend JPG/PNG, square or 4:5, at least 600x600
+px. The current CLI places the image in a fixed frame but does not crop or align
+faces yet.
+
+## Section Selection
+
+Do not force every resume to use the same sections. Prefer these candidates,
+then select, merge, rename, or omit sections based on the user's background, JD,
+language, and page limit:
+
+- Education
+- Work Experience
+- Internship Experience
+- Projects
+- Personal Projects & Open Source
+- Skills
+- Research
+- Publications
+- Awards
+- Certifications
+- Languages
+- Summary
+
+For Chinese resumes, localize section labels at output time, such as `教育背景`,
+`工作经历`, `项目经历`, and `专业技能`.
+
 ## Rewrite Rules
 
 When rewriting for a JD:
