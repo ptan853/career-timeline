@@ -2,7 +2,7 @@
 
 <p align="center">
   <em>路漫漫其修远兮，吾将上下而求索。</em><br>
-  <sub>The road ahead is long; I will search high and low.</sub>
+  <sub>The road ahead is long and far; I will keep searching high and low.</sub>
 </p>
 
 Agents forget you between sessions.
