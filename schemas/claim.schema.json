@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-vault.dev/schemas/claim.schema.json",
+  "title": "Claim",
+  "type": "object",
+  "required": ["schema_version", "id", "event_id", "text", "status", "visibility"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^clm_[A-Za-z0-9_-]+$" },
+    "event_id": { "type": "string", "pattern": "^evt_[A-Za-z0-9_-]+$" },
+    "text": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "confirmed", "needs_review", "rejected"]
+    },
+    "visibility": {
+      "type": "string",
+      "enum": ["private", "resume", "public"]
+    },
+    "usable_for_resume": { "type": "boolean" },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source": { "type": "string" },
+          "quote": { "type": "string" },
+          "url": { "type": ["string", "null"] }
+        },
+        "required": ["source"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

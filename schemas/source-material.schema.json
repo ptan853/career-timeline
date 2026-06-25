@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-vault.dev/schemas/source-material.schema.json",
+  "title": "SourceMaterial",
+  "type": "object",
+  "required": ["schema_version", "id", "type", "title", "created_at"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^src_[A-Za-z0-9_-]+$" },
+    "type": {
+      "type": "string",
+      "enum": ["note", "resume", "file", "url", "github", "jd"]
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "uri": { "type": ["string", "null"] },
+    "path": { "type": ["string", "null"] },
+    "text_path": { "type": ["string", "null"] },
+    "created_at": { "type": "string" },
+    "processing_status": {
+      "type": "string",
+      "enum": ["stored", "processed", "failed", "needs_review"]
+    }
+  },
+  "additionalProperties": false
+}

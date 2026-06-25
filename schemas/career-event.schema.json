@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-vault.dev/schemas/career-event.schema.json",
+  "title": "CareerEvent",
+  "type": "object",
+  "required": ["schema_version", "id", "title", "type", "time", "status"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^evt_[A-Za-z0-9_-]+$" },
+    "title": { "type": "string", "minLength": 1 },
+    "type": {
+      "type": "string",
+      "enum": [
+        "work",
+        "internship",
+        "project",
+        "education",
+        "research",
+        "publication",
+        "award",
+        "scholarship",
+        "certification",
+        "course",
+        "competition",
+        "open_source",
+        "volunteer",
+        "startup",
+        "milestone",
+        "custom"
+      ]
+    },
+    "custom_type": { "type": ["string", "null"] },
+    "time": {
+      "type": "object",
+      "required": ["start", "end", "precision"],
+      "properties": {
+        "start": { "type": ["string", "null"] },
+        "end": { "type": ["string", "null"] },
+        "precision": {
+          "type": "string",
+          "enum": ["day", "month", "year", "range", "unknown"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "confirmed", "needs_review", "archived"]
+    },
+    "description": { "type": "string" },
+    "role": { "type": ["string", "null"] },
+    "organization": { "type": ["string", "null"] },
+    "location": { "type": ["string", "null"] },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "details": {
+      "type": "object",
+      "additionalProperties": { "type": ["string", "number", "boolean", "null"] }
+    },
+    "claims": { "type": "array", "items": { "type": "string" } },
+    "sources": { "type": "array", "items": { "type": "string" } },
+    "relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "event_id"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["part_of", "occurred_during", "related_to", "led_to", "resulted_in", "replaced_by"]
+          },
+          "event_id": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "visibility": {
+      "type": "string",
+      "enum": ["private", "resume", "public"]
+    },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}
