@@ -1,6 +1,6 @@
-# Career Vault Resume
+# Career Timeline
 
-![Career Vault Resume cover](assets/cover.png)
+![Career Timeline cover](assets/cover.png)
 
 <p align="center">
   <em>路漫漫其修远兮，吾将上下而求索。</em><br>
@@ -9,9 +9,9 @@
 
 Agents forget you between sessions.
 
-Career Vault Resume gives local coding agents a durable, inspectable memory of
-your professional identity: who you are, what you have built, where each fact
-came from, and how that context should be reused for resumes, interviews,
+Career Timeline gives local coding agents a durable, inspectable memory of your
+professional identity: who you are, what you have built, where each fact came
+from, and how that context should be reused for resumes, interviews,
 portfolios, job applications, and future agent sessions.
 
 It is not a visual resume designer. It is the identity and career-memory layer
@@ -74,8 +74,8 @@ Clone or keep this repository locally, then install it as a Codex-discoverable
 skill:
 
 ```bash
-ln -s /Users/pt623/Documents/career-vault-resume \
-  /Users/pt623/.codex/skills/career-vault-resume
+ln -s /Users/pt623/Documents/career-timeline \
+  /Users/pt623/.codex/skills/career-timeline
 ```
 
 The same `SKILL.md` can also be read by Claude Code, Gemini CLI, OpenCode, or
@@ -87,13 +87,13 @@ only the Python standard library and requires Python 3.10+.
 Initialize a vault:
 
 ```bash
-python scripts/career_vault.py --vault ~/.career-vault init
+python scripts/career_timeline.py --vault ~/.career-vault init
 ```
 
 Add profile basics:
 
 ```bash
-python scripts/career_vault.py --vault ~/.career-vault profile update \
+python scripts/career_timeline.py --vault ~/.career-vault profile update \
   --display-name "Pat Example" \
   --email "pat@example.com" \
   --phone "+1 555 0100" \
@@ -107,14 +107,14 @@ template or portfolio output needs them.
 Import agent-extracted draft events:
 
 ```bash
-python scripts/career_vault.py --vault ~/.career-vault import-events \
+python scripts/career_timeline.py --vault ~/.career-vault import-events \
   --file examples/draft_events.json
 ```
 
 Export agent-readable identity context:
 
 ```bash
-python scripts/career_vault.py --vault ~/.career-vault build-identity
+python scripts/career_timeline.py --vault ~/.career-vault build-identity
 ```
 
 The generated identity file lives at:
@@ -126,13 +126,13 @@ The generated identity file lives at:
 Generate a simple editable resume:
 
 ```bash
-python scripts/career_vault.py --vault ~/.career-vault build-basic-resume \
+python scripts/career_timeline.py --vault ~/.career-vault build-basic-resume \
   --language zh \
   --pages 1 \
   --include-photo
 ```
 
-Run `python scripts/career_vault.py --help` for the full CLI. Use
+Run `python scripts/career_timeline.py --help` for the full CLI. Use
 `build-resume-context --jd jd.md` when a target job description is available.
 
 ## Vault Files
@@ -162,7 +162,8 @@ vector store.
    professional identity, resume, portfolio, job search, or interview stories.
 2. Save raw material first with `add-source`.
 3. Extract small career events from the material.
-4. Show the draft event list to the user for review.
+4. Show one review card per draft event, with evidence and confirmation
+   choices. Do not replace a batch with a summary.
 5. Import reviewed events with `import-events`.
 6. Run `build-identity` before answering user-specific professional background
    questions.
@@ -177,9 +178,9 @@ examples/draft_events.json
 ## Project Layout
 
 ```text
-career-vault-resume/
+career-timeline/
   SKILL.md                         # agent-facing workflow
-  scripts/career_vault.py          # standard-library CLI
+  scripts/career_timeline.py       # standard-library CLI
   references/
     vault-format.md
     extraction-guide.md
@@ -194,7 +195,7 @@ career-vault-resume/
     sample_jd.md
     sample_vault/
   tests/
-    test_career_vault_cli.py
+    test_career_timeline_cli.py
 ```
 
 ## Status
