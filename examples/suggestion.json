@@ -1,0 +1,36 @@
+{
+  "title": "Resume import suggestions",
+  "source_ids": ["src_resume_001"],
+  "candidate_actions": [
+    {
+      "action": "create_event",
+      "event": {
+        "title": "Built Career Vault Resume",
+        "type": "project",
+        "time": {
+          "start": "2026-06",
+          "precision": "month"
+        },
+        "description": "Built a local-first career memory skill for storing career events and generating resume context.",
+        "claims": [
+          "Built a local-first career memory skill.",
+          "Implemented a reviewable file-based career vault workflow."
+        ],
+        "sources": ["src_resume_001"]
+      }
+    },
+    {
+      "action": "update_profile",
+      "patch": {
+        "user": {
+          "headline": "AI engineer building local-first career tools",
+          "target_roles": ["AI Engineer", "Developer Tools Engineer"]
+        }
+      }
+    }
+  ],
+  "questions": [
+    "Should this event be marked confirmed or kept as draft?",
+    "Is the headline accurate for public use?"
+  ]
+}

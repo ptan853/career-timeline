@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-vault.dev/schemas/suggestion.schema.json",
+  "title": "CareerVaultSuggestion",
+  "type": "object",
+  "required": ["schema_version", "id", "title", "status", "candidate_actions"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^sug_[A-Za-z0-9_-]+$" },
+    "title": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "enum": ["active", "applied", "rejected"] },
+    "source_ids": { "type": "array", "items": { "type": "string" } },
+    "candidate_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["action", "event"],
+            "properties": {
+              "action": { "const": "create_event" },
+              "event": { "type": "object" }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["action", "target_event_id", "patch"],
+            "properties": {
+              "action": { "const": "update_event" },
+              "target_event_id": { "type": "string" },
+              "patch": { "type": "object" }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["action", "patch"],
+            "properties": {
+              "action": { "const": "update_profile" },
+              "patch": { "type": "object" }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "questions": { "type": "array", "items": { "type": "string" } },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}

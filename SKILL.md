@@ -58,12 +58,15 @@ repo unless the user explicitly wants the career memory versioned there.
 1. Initialize or locate the vault.
 2. Save user-provided material as a source.
 3. Extract detailed career events from the source using agent judgment.
-4. Present extracted events for user review before storing when practical.
-5. Import reviewed draft events in bulk, or add a single event directly.
-6. Add concise event-level claims when the source supports them.
-7. Build `exports/agent_identity.md` when an agent needs user background.
-8. Build `exports/resume_context.md` when a user provides a target JD.
-9. Build `exports/basic_resume.*` only when the user wants a simple,
+4. Store extracted changes as active suggestions when the user has not
+   confirmed them yet.
+5. Present suggestions for user review.
+6. Apply or reject suggestions. Applied suggestions may create events, update
+   existing events, or update profile fields.
+7. Add concise event-level claims when the source supports them.
+8. Build `exports/agent_identity.md` when an agent needs user background.
+9. Build `exports/resume_context.md` when a user provides a target JD.
+10. Build `exports/basic_resume.*` only when the user wants a simple,
    conservative resume from the vault.
 
 This skill can produce a simple black-and-white basic resume as JSON, Markdown,
@@ -80,10 +83,11 @@ review list and ask the user what should be confirmed, edited, merged, hidden,
 or left as `needs_review`.
 
 For multi-event extraction, create a JSON draft shaped like
-`examples/draft_events.json`. Use `status: draft` unless the user explicitly
-confirms the event. After the user reviews the list, import the draft with
-`import-events`. This keeps semantic extraction in the agent while making local
-storage deterministic.
+`examples/suggestion.json` and store it with `create-suggestion`. Use
+`status: draft` for candidate events unless the user explicitly confirms them.
+After the user reviews the suggestion, apply it with `apply-suggestion` or
+reject it with `reject-suggestion`. This keeps semantic extraction in the agent
+while making local storage deterministic.
 
 When the user asks for a resume, check whether `profile.yaml` has
 `display_name`, `email`, `phone`, and `location`. If any are missing, ask for
@@ -207,6 +211,11 @@ python scripts/career_vault.py --vault ~/.career-vault add-source --type note --
 python scripts/career_vault.py --vault ~/.career-vault add-source --type agent_session --title "Built Career Vault Resume skill" --text "..."
 python scripts/career_vault.py --vault ~/.career-vault add-event --title "Built AI Resume Generator" --type project --start 2025-05 --description "..."
 python scripts/career_vault.py --vault ~/.career-vault import-events --file examples/draft_events.json
+python scripts/career_vault.py --vault ~/.career-vault create-suggestion --file examples/suggestion.json
+python scripts/career_vault.py --vault ~/.career-vault list-suggestions
+python scripts/career_vault.py --vault ~/.career-vault show-suggestion sug_xxx
+python scripts/career_vault.py --vault ~/.career-vault apply-suggestion sug_xxx
+python scripts/career_vault.py --vault ~/.career-vault reject-suggestion sug_xxx --reason "Duplicate"
 python scripts/career_vault.py --vault ~/.career-vault list-events
 python scripts/career_vault.py --vault ~/.career-vault profile show --json
 python scripts/career_vault.py --vault ~/.career-vault profile update --display-name "Pat Example" --email "pat@example.com" --phone "+1 555 0100" --location "San Francisco, CA" --photo-path path/to/headshot.jpg

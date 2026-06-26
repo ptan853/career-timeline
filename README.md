@@ -37,6 +37,8 @@ agents can read before answering user-specific professional questions.
   descriptions, and agent sessions.
 - Lets an agent extract career events, claims, and source references into a
   local vault.
+- Stores agent-extracted changes as active suggestions before applying them to
+  the formal vault.
 - Imports multi-event JSON drafts produced by an agent review workflow.
 - Exports `agent_identity.md` so future agents can understand the user's
   professional background.
@@ -55,7 +57,10 @@ resume-designer skill that consumes this vault's exported context.
 resumes / notes / links / sessions / JDs
         |
         v
-agent extracts reviewed career events
+agent extracts reviewable suggestions
+        |
+        v
+user applies or rejects suggestions
         |
         v
 .career-vault/
@@ -111,6 +116,24 @@ python scripts/career_vault.py --vault ~/.career-vault import-events \
   --file examples/draft_events.json
 ```
 
+Create and apply a reviewable suggestion:
+
+```bash
+python scripts/career_vault.py --vault ~/.career-vault create-suggestion \
+  --file examples/suggestion.json
+
+python scripts/career_vault.py --vault ~/.career-vault list-suggestions
+python scripts/career_vault.py --vault ~/.career-vault show-suggestion sug_xxx
+python scripts/career_vault.py --vault ~/.career-vault apply-suggestion sug_xxx
+```
+
+Reject a suggestion without changing events or profile:
+
+```bash
+python scripts/career_vault.py --vault ~/.career-vault reject-suggestion sug_xxx \
+  --reason "Duplicate or inaccurate"
+```
+
 Export agent-readable identity context:
 
 ```bash
@@ -141,6 +164,9 @@ Run `python scripts/career_vault.py --help` for the full CLI. Use
 .career-vault/
   profile.yaml              # identity basics, target roles, optional photo
   sources/                  # preserved source notes, files, URLs, sessions
+  suggestions/
+    active/                 # reviewable agent-extracted changes
+    archive/                # lightweight applied/rejected audit records
   events/                   # career events as YAML plus JSON sidecars
   claims/                   # reserved for standalone claim storage
   resumes/                  # reserved for generated resume artifacts
@@ -162,11 +188,13 @@ vector store.
    professional identity, resume, portfolio, job search, or interview stories.
 2. Save raw material first with `add-source`.
 3. Extract small career events from the material.
-4. Show the draft event list to the user for review.
-5. Import reviewed events with `import-events`.
-6. Run `build-identity` before answering user-specific professional background
+4. Store unconfirmed extracted changes with `create-suggestion`.
+5. Show the suggestion to the user for review.
+6. Apply confirmed suggestions with `apply-suggestion`, or reject inaccurate
+   suggestions with `reject-suggestion`.
+7. Run `build-identity` before answering user-specific professional background
    questions.
-7. Run `build-resume-context` when a target JD is provided.
+8. Run `build-resume-context` when a target JD is provided.
 
 For multi-event extraction, use the format in:
 

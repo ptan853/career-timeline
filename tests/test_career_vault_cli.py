@@ -369,3 +369,160 @@ def test_add_event_keeps_multiple_non_latin_titles_in_same_second(tmp_path: Path
     events = json.loads(listed.stdout)
     assert len(events) == 2
     assert {event["title"] for event in events} == {"中文项目一", "中文项目二"}
+
+
+def test_suggestion_create_show_apply_archives_actions(tmp_path: Path) -> None:
+    vault = tmp_path / ".career-vault"
+    suggestion = tmp_path / "suggestion.json"
+    suggestion.write_text(
+        json.dumps(
+            {
+                "title": "Resume import suggestions",
+                "source_ids": ["src_resume_001"],
+                "candidate_actions": [
+                    {
+                        "action": "create_event",
+                        "event": {
+                            "title": "Built Career Vault Resume",
+                            "type": "project",
+                            "time": {"start": "2026-06", "precision": "month"},
+                            "description": "Built a local-first career memory skill.",
+                            "claims": ["Built a local-first career memory skill."],
+                            "sources": ["src_resume_001"],
+                        },
+                    },
+                    {
+                        "action": "update_profile",
+                        "patch": {
+                            "user": {
+                                "display_name": "Pat Example",
+                                "email": "pat@example.com",
+                                "target_roles": ["AI Engineer"],
+                            }
+                        },
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    run_cli(vault, "init")
+    created = run_cli(vault, "create-suggestion", "--file", str(suggestion))
+    suggestion_id = json.loads(created.stdout)["id"]
+
+    active_path = vault / "suggestions" / "active" / f"{suggestion_id}.json"
+    assert active_path.exists()
+
+    listed = run_cli(vault, "list-suggestions", "--json")
+    suggestions = json.loads(listed.stdout)
+    assert [item["id"] for item in suggestions] == [suggestion_id]
+    assert suggestions[0]["action_count"] == 2
+
+    shown = run_cli(vault, "show-suggestion", suggestion_id)
+    shown_data = json.loads(shown.stdout)
+    assert shown_data["title"] == "Resume import suggestions"
+    assert shown_data["status"] == "active"
+
+    applied = run_cli(vault, "apply-suggestion", suggestion_id)
+    assert "Applied suggestion" in applied.stdout
+    assert not active_path.exists()
+
+    events = json.loads(run_cli(vault, "list-events", "--json").stdout)
+    assert len(events) == 1
+    assert events[0]["title"] == "Built Career Vault Resume"
+    assert events[0]["status"] == "draft"
+
+    profile = json.loads(run_cli(vault, "profile", "show", "--json").stdout)
+    assert profile["user"]["display_name"] == "Pat Example"
+    assert profile["user"]["email"] == "pat@example.com"
+    assert profile["user"]["target_roles"] == ["AI Engineer"]
+
+    archived = list((vault / "suggestions" / "archive").glob(f"{suggestion_id}.applied.json"))
+    assert len(archived) == 1
+    archive = json.loads(archived[0].read_text())
+    assert archive["status"] == "applied"
+    assert archive["source_ids"] == ["src_resume_001"]
+    assert archive["created_event_ids"] == [events[0]["id"]]
+    assert archive["profile_fields_updated"] == ["user.display_name", "user.email", "user.target_roles"]
+
+
+def test_suggestion_can_update_existing_event(tmp_path: Path) -> None:
+    vault = tmp_path / ".career-vault"
+    suggestion = tmp_path / "suggestion.json"
+
+    run_cli(vault, "init")
+    run_cli(
+        vault,
+        "add-event",
+        "--id",
+        "evt_existing_project",
+        "--title",
+        "Career Vault",
+        "--type",
+        "project",
+        "--status",
+        "draft",
+        "--description",
+        "Initial project summary.",
+    )
+    suggestion.write_text(
+        json.dumps(
+            {
+                "title": "Project update",
+                "candidate_actions": [
+                    {
+                        "action": "update_event",
+                        "target_event_id": "evt_existing_project",
+                        "patch": {
+                            "description": "Built a local-first career memory vault with reviewable suggestions.",
+                            "details.tech_stack": "Python, JSON",
+                            "claims.add": ["Added a review gate for AI-extracted career data."],
+                        },
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    suggestion_id = json.loads(run_cli(vault, "create-suggestion", "--file", str(suggestion)).stdout)["id"]
+    run_cli(vault, "apply-suggestion", suggestion_id)
+
+    event = json.loads((vault / "events" / "evt_existing_project.json").read_text())
+    assert event["description"] == "Built a local-first career memory vault with reviewable suggestions."
+    assert event["details"]["tech_stack"] == "Python, JSON"
+    assert event["claims"] == ["Added a review gate for AI-extracted career data."]
+
+    archive = json.loads((vault / "suggestions" / "archive" / f"{suggestion_id}.applied.json").read_text())
+    assert archive["updated_event_ids"] == ["evt_existing_project"]
+
+
+def test_reject_suggestion_archives_without_applying(tmp_path: Path) -> None:
+    vault = tmp_path / ".career-vault"
+    suggestion = tmp_path / "suggestion.json"
+    suggestion.write_text(
+        json.dumps(
+            {
+                "title": "Bad suggestion",
+                "candidate_actions": [
+                    {
+                        "action": "create_event",
+                        "event": {"title": "Wrong Event", "type": "project"},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    run_cli(vault, "init")
+    suggestion_id = json.loads(run_cli(vault, "create-suggestion", "--file", str(suggestion)).stdout)["id"]
+    rejected = run_cli(vault, "reject-suggestion", suggestion_id, "--reason", "Duplicate")
+    assert "Rejected suggestion" in rejected.stdout
+
+    assert json.loads(run_cli(vault, "list-events", "--json").stdout) == []
+    assert not (vault / "suggestions" / "active" / f"{suggestion_id}.json").exists()
+    archive = json.loads((vault / "suggestions" / "archive" / f"{suggestion_id}.rejected.json").read_text())
+    assert archive["status"] == "rejected"
+    assert archive["reason"] == "Duplicate"

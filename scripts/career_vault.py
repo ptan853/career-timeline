@@ -41,6 +41,7 @@ EVENT_STATUSES = {"draft", "confirmed", "needs_review", "archived"}
 VISIBILITIES = {"private", "resume", "public"}
 SOURCE_TYPES = {"note", "resume", "file", "url", "github", "jd", "agent_session"}
 RESUME_REQUIRED_PROFILE_FIELDS = ("display_name", "email", "phone", "location")
+SUGGESTION_ACTIONS = {"create_event", "update_event", "update_profile"}
 SECTION_TITLES = {
     "zh": {
         "education": "教育背景",
@@ -223,7 +224,15 @@ def write_profile(vault: Path, profile: dict[str, Any]) -> None:
 
 
 def ensure_vault(vault: Path) -> None:
-    for dirname in ("events", "claims", "sources", "resumes", "exports"):
+    for dirname in (
+        "events",
+        "claims",
+        "sources",
+        "resumes",
+        "exports",
+        "suggestions/active",
+        "suggestions/archive",
+    ):
         (vault / dirname).mkdir(parents=True, exist_ok=True)
     profile = vault / "profile.yaml"
     if not profile.exists():
@@ -328,6 +337,18 @@ def unique_event_id(vault: Path, title: str, provided_id: str | None = None) -> 
     return event_id
 
 
+def unique_suggestion_id(vault: Path, title: str, provided_id: str | None = None) -> str:
+    if provided_id:
+        return provided_id
+    base = f"sug_{compact_timestamp()}_{slugify(title, 'suggestion')}"
+    suggestion_id = base
+    counter = 2
+    while (vault / "suggestions" / "active" / f"{suggestion_id}.json").exists():
+        suggestion_id = f"{base}_{counter}"
+        counter += 1
+    return suggestion_id
+
+
 def normalize_draft_event(vault: Path, raw: dict[str, Any]) -> dict[str, Any]:
     title = str(raw.get("title") or "").strip()
     if not title:
@@ -384,6 +405,241 @@ def load_draft_events(path: Path) -> list[dict[str, Any]]:
         if not isinstance(event, dict):
             raise SystemExit("Each imported event must be a JSON object")
     return events
+
+
+def suggestion_active_path(vault: Path, suggestion_id: str) -> Path:
+    return vault / "suggestions" / "active" / f"{suggestion_id}.json"
+
+
+def suggestion_archive_path(vault: Path, suggestion_id: str, status: str) -> Path:
+    return vault / "suggestions" / "archive" / f"{suggestion_id}.{status}.json"
+
+
+def load_suggestion(vault: Path, suggestion_id: str) -> dict[str, Any]:
+    path = suggestion_active_path(vault, suggestion_id)
+    if not path.exists():
+        raise SystemExit(f"Active suggestion not found: {suggestion_id}")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def normalize_suggestion(vault: Path, raw: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(raw, dict):
+        raise SystemExit("Suggestion file must contain a JSON object")
+    title = str(raw.get("title") or "Career vault suggestion").strip()
+    actions = raw.get("candidate_actions")
+    if not isinstance(actions, list) or not actions:
+        raise SystemExit("Suggestion must include a non-empty candidate_actions list")
+    for action in actions:
+        if not isinstance(action, dict):
+            raise SystemExit("Each candidate action must be a JSON object")
+        action_name = action.get("action")
+        if action_name not in SUGGESTION_ACTIONS:
+            raise SystemExit(f"Unsupported suggestion action: {action_name}")
+    timestamp = now_iso()
+    return {
+        "schema_version": 1,
+        "id": unique_suggestion_id(vault, title, raw.get("id")),
+        "title": title,
+        "status": "active",
+        "source_ids": raw.get("source_ids", []),
+        "candidate_actions": actions,
+        "questions": raw.get("questions", []),
+        "created_at": raw.get("created_at", timestamp),
+        "updated_at": timestamp,
+    }
+
+
+def command_create_suggestion(args: argparse.Namespace) -> None:
+    vault = vault_path(args)
+    ensure_vault(vault)
+    path = Path(args.file).expanduser().resolve()
+    if not path.exists():
+        raise SystemExit(f"Suggestion file does not exist: {path}")
+    suggestion = normalize_suggestion(vault, json.loads(path.read_text(encoding="utf-8")))
+    output = suggestion_active_path(vault, suggestion["id"])
+    output.write_text(json.dumps(suggestion, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(json.dumps({"id": suggestion["id"], "path": str(output)}, ensure_ascii=False))
+
+
+def command_list_suggestions(args: argparse.Namespace) -> None:
+    vault = vault_path(args)
+    ensure_vault(vault)
+    summaries = []
+    for path in sorted((vault / "suggestions" / "active").glob("sug_*.json")):
+        suggestion = json.loads(path.read_text(encoding="utf-8"))
+        summaries.append(
+            {
+                "id": suggestion.get("id", path.stem),
+                "title": suggestion.get("title", ""),
+                "status": suggestion.get("status", "active"),
+                "source_ids": suggestion.get("source_ids", []),
+                "action_count": len(suggestion.get("candidate_actions") or []),
+                "created_at": suggestion.get("created_at"),
+            }
+        )
+    if args.json:
+        print(json.dumps(summaries, indent=2, ensure_ascii=False))
+        return
+    for item in summaries:
+        print(f"{item['id']} | {item['status']} | {item['action_count']} actions | {item['title']}")
+
+
+def command_show_suggestion(args: argparse.Namespace) -> None:
+    vault = vault_path(args)
+    ensure_vault(vault)
+    suggestion = load_suggestion(vault, args.suggestion_id)
+    print(json.dumps(suggestion, indent=2, ensure_ascii=False))
+
+
+def set_nested_value(target: dict[str, Any], path: str, value: Any) -> None:
+    parts = path.split(".")
+    current = target
+    for part in parts[:-1]:
+        next_value = current.get(part)
+        if not isinstance(next_value, dict):
+            next_value = {}
+            current[part] = next_value
+        current = next_value
+    current[parts[-1]] = value
+
+
+def append_unique(values: list[Any], additions: Any) -> list[Any]:
+    addition_list = additions if isinstance(additions, list) else [additions]
+    result = list(values)
+    for item in addition_list:
+        if item not in result:
+            result.append(item)
+    return result
+
+
+def apply_event_patch(event: dict[str, Any], patch: dict[str, Any]) -> None:
+    for key, value in patch.items():
+        if key == "claims.add":
+            event["claims"] = append_unique(event.get("claims") or [], value)
+        elif key == "tags.add":
+            event["tags"] = append_unique(event.get("tags") or [], value)
+        elif "." in key:
+            set_nested_value(event, key, value)
+        else:
+            event[key] = value
+    event["updated_at"] = now_iso()
+
+
+def update_profile_with_patch(profile: dict[str, Any], patch: dict[str, Any]) -> list[str]:
+    updated: list[str] = []
+
+    def merge(section: dict[str, Any], values: dict[str, Any], prefix: str) -> None:
+        for key, value in values.items():
+            if isinstance(value, dict) and isinstance(section.get(key), dict):
+                merge(section[key], value, f"{prefix}.{key}" if prefix else key)
+            else:
+                section[key] = value
+                updated.append(f"{prefix}.{key}" if prefix else key)
+
+    for key, value in patch.items():
+        if key in profile and isinstance(profile[key], dict) and isinstance(value, dict):
+            merge(profile[key], value, key)
+        elif key in profile.get("user", {}):
+            profile["user"][key] = value
+            updated.append(f"user.{key}")
+        else:
+            profile[key] = value
+            updated.append(key)
+    return updated
+
+
+def archive_suggestion(
+    vault: Path,
+    suggestion: dict[str, Any],
+    status: str,
+    extra: dict[str, Any],
+) -> Path:
+    suggestion_id = suggestion["id"]
+    archive = {
+        "schema_version": 1,
+        "id": suggestion_id,
+        "title": suggestion.get("title", ""),
+        "status": status,
+        "source_ids": suggestion.get("source_ids", []),
+        "action_count": len(suggestion.get("candidate_actions") or []),
+        "archived_at": now_iso(),
+        **extra,
+    }
+    output = suggestion_archive_path(vault, suggestion_id, status)
+    output.write_text(json.dumps(archive, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    active = suggestion_active_path(vault, suggestion_id)
+    if active.exists():
+        active.unlink()
+    return output
+
+
+def command_apply_suggestion(args: argparse.Namespace) -> None:
+    vault = vault_path(args)
+    ensure_vault(vault)
+    suggestion = load_suggestion(vault, args.suggestion_id)
+    created_event_ids: list[str] = []
+    updated_event_ids: list[str] = []
+    profile_fields_updated: list[str] = []
+
+    for action in suggestion.get("candidate_actions", []):
+        action_name = action.get("action")
+        if action_name == "create_event":
+            raw_event = action.get("event")
+            if not isinstance(raw_event, dict):
+                raise SystemExit("create_event action requires an event object")
+            event = normalize_draft_event(vault, raw_event)
+            write_event(vault, event)
+            created_event_ids.append(event["id"])
+        elif action_name == "update_event":
+            event_id = action.get("target_event_id")
+            patch = action.get("patch")
+            if not event_id or not isinstance(patch, dict):
+                raise SystemExit("update_event action requires target_event_id and patch object")
+            event_path = vault / "events" / f"{event_id}.yaml"
+            if not event_path.exists():
+                raise SystemExit(f"Target event not found: {event_id}")
+            event = read_event(event_path)
+            apply_event_patch(event, patch)
+            write_event(vault, event)
+            updated_event_ids.append(event_id)
+        elif action_name == "update_profile":
+            patch = action.get("patch")
+            if not isinstance(patch, dict):
+                raise SystemExit("update_profile action requires a patch object")
+            profile = read_profile(vault)
+            profile_fields_updated.extend(update_profile_with_patch(profile, patch))
+            write_profile(vault, profile)
+        else:
+            raise SystemExit(f"Unsupported suggestion action: {action_name}")
+
+    archive_suggestion(
+        vault,
+        suggestion,
+        "applied",
+        {
+            "applied_at": now_iso(),
+            "created_event_ids": created_event_ids,
+            "updated_event_ids": updated_event_ids,
+            "profile_fields_updated": profile_fields_updated,
+        },
+    )
+    print(f"Applied suggestion {suggestion['id']}")
+
+
+def command_reject_suggestion(args: argparse.Namespace) -> None:
+    vault = vault_path(args)
+    ensure_vault(vault)
+    suggestion = load_suggestion(vault, args.suggestion_id)
+    archive_suggestion(
+        vault,
+        suggestion,
+        "rejected",
+        {
+            "rejected_at": now_iso(),
+            "reason": args.reason or "",
+        },
+    )
+    print(f"Rejected suggestion {suggestion['id']}")
 
 
 def command_init(args: argparse.Namespace) -> None:
@@ -934,6 +1190,27 @@ def build_parser() -> argparse.ArgumentParser:
     import_events = sub.add_parser("import-events", help="Import agent-extracted draft events from JSON")
     import_events.add_argument("--file", required=True, help="Path to a JSON list or object with an events list")
     import_events.set_defaults(func=command_import_events)
+
+    create_suggestion = sub.add_parser("create-suggestion", help="Create a reviewable active suggestion")
+    create_suggestion.add_argument("--file", required=True, help="Path to a suggestion JSON file")
+    create_suggestion.set_defaults(func=command_create_suggestion)
+
+    list_suggestions = sub.add_parser("list-suggestions", help="List active suggestions")
+    list_suggestions.add_argument("--json", action="store_true")
+    list_suggestions.set_defaults(func=command_list_suggestions)
+
+    show_suggestion = sub.add_parser("show-suggestion", help="Show one active suggestion")
+    show_suggestion.add_argument("suggestion_id")
+    show_suggestion.set_defaults(func=command_show_suggestion)
+
+    apply_suggestion = sub.add_parser("apply-suggestion", help="Apply an active suggestion and archive it")
+    apply_suggestion.add_argument("suggestion_id")
+    apply_suggestion.set_defaults(func=command_apply_suggestion)
+
+    reject_suggestion = sub.add_parser("reject-suggestion", help="Reject an active suggestion and archive it")
+    reject_suggestion.add_argument("suggestion_id")
+    reject_suggestion.add_argument("--reason", default="")
+    reject_suggestion.set_defaults(func=command_reject_suggestion)
 
     list_events = sub.add_parser("list-events", help="List career events")
     list_events.add_argument("--json", action="store_true")

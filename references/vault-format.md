@@ -11,6 +11,12 @@
     claims.jsonl
   sources/
     src_*.md
+  suggestions/
+    active/
+      sug_*.json
+    archive/
+      sug_*.applied.json
+      sug_*.rejected.json
   resumes/
   exports/
     agent_identity.md
@@ -84,6 +90,24 @@ Recommended fields:
 
 Use `details` for flexible fields that should not become first-class schema
 fields yet.
+
+## Suggestions
+
+Suggestions are reviewable agent-extracted changes. They are not facts yet.
+Store unconfirmed extracted content in `suggestions/active/` first, then apply
+or reject it after user review.
+
+Supported active actions:
+
+- `create_event`: create a new draft or confirmed career event
+- `update_event`: patch an existing event when new material refers to the same
+  underlying work
+- `update_profile`: update stable profile fields after user confirmation
+
+After apply or reject, move the suggestion to `suggestions/archive/` as a
+lightweight audit record. The archive should keep IDs, source references, action
+counts, and created/updated target IDs, but should not duplicate large source
+content.
 
 ## Time
 
