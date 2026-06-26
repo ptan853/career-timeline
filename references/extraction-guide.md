@@ -46,6 +46,26 @@ Do not create events for vague claims without evidence unless they are marked
 7. Present the draft event list to the user for review.
 8. Save reviewed events as JSON and import them with `import-events`.
 
+## One-Event-At-A-Time Intake
+
+Use this mode when the user is orally building a profile, describing one
+experience at a time, or asking to go step by step.
+
+For each user-provided event:
+
+1. Extract exactly one candidate event unless the user clearly described
+   multiple separate experiences.
+2. Create a suggestion with one `create_event` action or one `update_event`
+   action if it appears to match an existing event.
+3. Ask the user to confirm, edit, reject, or keep the suggestion active.
+4. Apply the suggestion only after confirmation.
+5. Ask whether there is another event to add.
+
+Do not end the profile-building session after saving one event. End only when
+the user says they are finished, pauses the workflow, or switches tasks.
+
+For single-event suggestions, see `examples/single_event_suggestion.json`.
+
 ## Draft Import Format
 
 For multi-event extraction, write a JSON file with an `events` array. See

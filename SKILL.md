@@ -82,6 +82,34 @@ JD, or confirmation of uncertain fields. After extracting events, show a concise
 review list and ask the user what should be confirmed, edited, merged, hidden,
 or left as `needs_review`.
 
+## Profile Building Session
+
+Support both batch import and one-event-at-a-time collection.
+
+Use batch mode when the user provides a resume, long career story, archive of
+materials, or several links at once. In batch mode, extract multiple candidate
+actions into one suggestion, then ask the user to review the full list.
+
+Use one-event mode when the user describes one experience at a time or asks to
+build their profile step by step. In one-event mode:
+
+1. Ask the user to describe one experience naturally.
+2. Convert only that experience into a single active suggestion.
+3. Show the extracted title, type, time, description, claims, missing fields,
+   and possible match with existing events.
+4. Ask whether to apply, edit, reject, or leave it active.
+5. After apply or reject, ask whether the user has another event to add.
+6. Stop only when the user says there are no more events, or asks to finish.
+7. Build or refresh `exports/agent_identity.md` at the end of the session.
+
+Do not assume a user is finished after one event. Ask a short continuation
+question such as:
+
+```text
+Saved. Do you want to add another experience, or finish this profile-building
+session for now?
+```
+
 For multi-event extraction, create a JSON draft shaped like
 `examples/suggestion.json` and store it with `create-suggestion`. Use
 `status: draft` for candidate events unless the user explicitly confirms them.

@@ -1,0 +1,37 @@
+{
+  "title": "Single project event suggestion",
+  "source_ids": ["src_step_by_step_note_001"],
+  "candidate_actions": [
+    {
+      "action": "create_event",
+      "event": {
+        "title": "Built AI Resume Generator",
+        "type": "project",
+        "time": {
+          "start": "2025-05",
+          "end": "2025-08",
+          "precision": "month"
+        },
+        "status": "draft",
+        "description": "Built a template-driven resume generation workflow and explored AI-assisted rewriting for target job descriptions.",
+        "role": "Creator",
+        "tags": ["AI", "resume", "LaTeX"],
+        "details": {
+          "tech_stack": "Python, LaTeX",
+          "needs_review": "Confirm exact dates and whether this should be public."
+        },
+        "claims": [
+          "Built a template-driven resume generation workflow.",
+          "Explored AI-assisted resume rewriting for target job descriptions."
+        ],
+        "sources": ["src_step_by_step_note_001"],
+        "visibility": "private"
+      }
+    }
+  ],
+  "questions": [
+    "Are the dates correct?",
+    "Should this event be saved as draft or confirmed?",
+    "Do you want to add another experience after this one?"
+  ]
+}
